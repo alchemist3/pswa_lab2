@@ -1,4 +1,9 @@
-import jade.core.Agent;
 
-public class MaliciousAgent extends Agent{
+@SuppressWarnings("serial")
+public class MaliciousAgent extends CountingAgent {
+
+    @Override
+    protected void setup() {
+
+    }
 }
