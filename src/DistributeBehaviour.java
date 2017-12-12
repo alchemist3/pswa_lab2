@@ -17,7 +17,6 @@ public class DistributeBehaviour extends CyclicBehaviour {
     private List<CountingAgent.CountingAgentInfo> countingAgents;
 
 
-
     public DistributeBehaviour(DistributorAgent agent) {
         super();
 
@@ -29,6 +28,7 @@ public class DistributeBehaviour extends CyclicBehaviour {
         refreshCountingAgents();
         sendMatrix();
         receiveResult();
+        receiveFailure();
     }
 
     private void refreshCountingAgents() {
@@ -100,19 +100,43 @@ public class DistributeBehaviour extends CyclicBehaviour {
                 if (MatrixPart.MatrixPartStatus.Calculated.equals(mf.getState()))
                     agent.getResultMatrix().setValue(mf.getRowIndex(), mf.getColIndex(), mf.getResult());
                 System.out.println(agent.getLocalName() + ": got partial result (" + mf.getRowIndex() + ";" + mf.getColIndex() + ") from agent " + msg.getSender().getLocalName());
+
+                agent.setElementsToCalculate(agent.getElementsToCalculate() - 1);
+
             } catch (UnreadableException e) {
                 e.printStackTrace();
             }
 
-            //printMatrix(agent.getResultMatrix());
+            if (agent.getElementsToCalculate()== 0){
+                printMatrix(agent.getResultMatrix());
+            }
 
-
+            //
         }
+    }
 
+    private void receiveFailure() {
+        MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.FAILURE);
+        ACLMessage msg = agent.receive(mt);
+        if (msg != null) {
+            try {
+                MatrixPart received = (MatrixPart) msg.getContentObject();
+                for (MatrixPart mf : agent.getMatrixParts()) {
+                    if (mf.getColIndex() == received.getColIndex() && mf.getRowIndex() == received.getRowIndex()) {
+                        mf.setState(MatrixPart.MatrixPartStatus.InQueue);
+                        break;
+                    }
+                }
+                System.out.println(agent.getLocalName() + ": received error message " + msg.getSender().getLocalName());
+            } catch (UnreadableException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
     private void printMatrix(Matrix m) {
+        System.out.println("\nResult:");
         for (double[] r : m.getValues()) {
             for (double v : r) {
                 System.out.print(v + "\t");

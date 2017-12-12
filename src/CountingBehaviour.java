@@ -1,6 +1,10 @@
+import java.io.IOException;
+import java.util.Random;
+
 import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.lang.acl.UnreadableException;
 import matrix.MatrixPart;
 
 @SuppressWarnings("serial")
@@ -39,24 +43,44 @@ public class CountingBehaviour extends CyclicBehaviour {
         MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchReplyWith(agent.getLocalName()), MessageTemplate.MatchPerformative(ACLMessage.CFP));
         ACLMessage msg = agent.receive(mt);
         if (msg != null) {
-            System.out.println(agent.getLocalName() + ": begin calculation");
-            agent.setAgentBusy(true);
-
             ACLMessage reply = msg.createReply();
+            agent.setAgentBusy(true);
             try {
                 mf = (MatrixPart) msg.getContentObject();
-                mf.setResult(calculate(mf));
-                reply.setContentObject(mf);
-                reply.setPerformative(ACLMessage.CONFIRM);
-            } catch (Exception e) {
+            } catch (UnreadableException e) {
                 e.printStackTrace();
             }
 
-            System.out.println(agent.getLocalName() + ": waits for " + agent.getDelay() + "ms");
-            agent.doWait(agent.getDelay());
+            if (new Random().nextInt(100) > 20) {
+                reply.setPerformative(ACLMessage.CONFIRM);
 
-            System.out.println(agent.getLocalName() + ": sends partial result");
-            agent.send(reply);
+                System.out.println(agent.getLocalName() + ": starts calculation");
+                mf.setResult(calculate(mf));
+                try {
+                    reply.setContentObject(mf);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                System.out.println(agent.getLocalName() + ": waits " + agent.getDelay() + "ms");
+                agent.doWait(agent.getDelay());
+
+                System.out.println(agent.getLocalName() + ": sends partial result");
+                agent.send(reply);
+            } else {
+                reply.setPerformative(ACLMessage.FAILURE);
+
+                System.out.println(agent.getLocalName() + ": failure happened");
+                try {
+                    reply.setContentObject(mf);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                agent.send(reply);
+
+                System.out.println(agent.getLocalName() + ": waits for 2000ms");
+                agent.doWait(agent.getDelay());
+            }
         }
     }
 

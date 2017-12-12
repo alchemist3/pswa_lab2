@@ -13,16 +13,18 @@ public class DistributorAgent extends Agent {
     private List<MatrixPart> matrixParts;
     private List<AID> countingAgents;
     private Matrix resultMatrix;
+    private int elementsToCalculate;
 
     @Override
     protected void setup() {
 
-        Matrix mA = new Matrix(3, 4, new double[][] {{4, 7 ,1, 5}, {2, 8, 3, 12}, {2, 8, 3, 12}});
+        Matrix mA = new Matrix(3, 4, new double[][] {{4, 7 ,1, 5}, {2, 8, 3, 12}, {1, 3, 7, 5}});
         Matrix mB = new Matrix(4, 3, new double[][] {{2, 4, 10}, {7, 3, 5}, {9, 1, 8}, {3, 11, 6}});
         resultMatrix = new Matrix(3, 3);
 
         countingAgents = new ArrayList<>();
         matrixParts = MatrixPart.generateFragments(mA, mB);
+        this.setElementsToCalculate(matrixParts.size());
 
         DFServiceHelper.getInstance().register(this, "matrixDistributor", "distributor");
 
@@ -39,5 +41,13 @@ public class DistributorAgent extends Agent {
 
     public Matrix getResultMatrix() {
         return resultMatrix;
+    }
+
+    public int getElementsToCalculate() {
+        return elementsToCalculate;
+    }
+
+    public void setElementsToCalculate(int num){
+        this.elementsToCalculate = num;
     }
 }
